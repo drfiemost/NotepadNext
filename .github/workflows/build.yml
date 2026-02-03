@@ -139,13 +139,6 @@ jobs:
               export RELEASE_TARBALL=${PACKAGE_NAME}.tar.gz
               git ls-files --recurse-submodules | tar caf ${RELEASE_TARBALL} --xform s:^:${PACKAGE_NAME}/: --verbatim-files-from -T-
 
-      - name: Upload source tarball
-        uses: actions/upload-artifact@v6
-        if: runner.os == 'Linux'
-        with:
-          name: NotepadNext-Source-Tarball
-          path: ${{ github.workspace }}/${{ env.RELEASE_TARBALL }}
-
   github:
     name: Draft GitHub Release
     runs-on: ubuntu-latest
