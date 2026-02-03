@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        qt_version: ["6.5", "6.8", "6.10"]
+        qt_version: ["6.5", "6.8", "6.9"]
 
     runs-on: ${{ matrix.os }}
 
@@ -144,6 +144,13 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+          ref: ${{ github.ref }}
+
+      - name: Get the tag name
+        id: get_tag_name
+        run: echo "tagname=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Create Draft Release
         run: |
@@ -172,4 +179,17 @@ jobs:
       - name: Upload macOS App
         run: |
           gh release upload ${{ github.ref_name }} NotepadNext-macOS-Qt$QT_RELEASE_VER/NotepadNext-${{ github.ref_name }}.dmg
+
+      - name: Create Tarball
+        id: package_generator
+        run: |
+          export PACKAGE_NAME=NotepadNext-${{ steps.get_tag_name.outputs.tagname }}
+          export RELEASE_TARBALL=${PACKAGE_NAME}.tar.gz
+          git ls-files --recurse-submodules | tar caf ${RELEASE_TARBALL} --xform s:^:${PACKAGE_NAME}/: --verbatim-files-from -T-
+          echo "filename=${RELEASE_TARBALL}" >> $GITHUB_OUTPUT
+
+      # The artifact is unzipped, so need to zip it back up so it can be uploaded
+      - name: Upload Tarball
+        run: |
+          gh release upload ${{ github.ref_name }} ${{ steps.package_generator.outputs.filename }}
 
