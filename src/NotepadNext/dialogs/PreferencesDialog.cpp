@@ -102,6 +102,12 @@ PreferencesDialog::PreferencesDialog(ApplicationSettings *settings, QWidget *par
     MapSettingToCheckBox(ui->checkBoxHighlightURLs, &ApplicationSettings::urlHighlighting, &ApplicationSettings::setURLHighlighting, &ApplicationSettings::urlHighlightingChanged);
     MapSettingToCheckBox(ui->checkBoxShowLineNumbers, &ApplicationSettings::showLineNumbers, &ApplicationSettings::setShowLineNumbers, &ApplicationSettings::showLineNumbersChanged);
 
+    ui->sbpIndentSize->setValue(settings->indentSize());
+    connect(ui->sbpIndentSize, QOverload<int>::of(&QSpinBox::valueChanged), settings, &ApplicationSettings::setIndentSize);
+    connect(settings, &::ApplicationSettings::fontSizeChanged, ui->sbpIndentSize, &QSpinBox::setValue);
+
+    MapSettingToRadioButton(ui->rbTabChar, &ApplicationSettings::tabChar, &ApplicationSettings::setTabChar, &ApplicationSettings::tabCharChanged);
+    MapSettingToRadioButton(ui->rbSpaceChar, &ApplicationSettings::tabCharSpaces, &ApplicationSettings::setTabCharSpaces, &ApplicationSettings::tabCharSpacesChanged);
 
     QButtonGroup *buttonGroup = new QButtonGroup(this);
     buttonGroup->addButton(ui->radioFollowCurrentDirectory, ApplicationSettings::FollowCurrentDocument);
@@ -175,6 +181,17 @@ void PreferencesDialog::MapSettingToGroupBox(QGroupBox *groupBox, Func1 getter, 
     // Set up two way connection
     connect(settings, notifier, groupBox, &QGroupBox::setChecked);
     connect(groupBox, &QGroupBox::toggled, settings, setter);
+}
+
+template<typename Func1, typename Func2, typename Func3>
+void PreferencesDialog::MapSettingToRadioButton(QRadioButton *radioButton, Func1 getter, Func2 setter, Func3 notifier) const
+{
+    // Get the value and set the radiobutton state
+    radioButton->setChecked(std::bind(getter, settings)());
+
+    // Set up two way connection
+    connect(settings, notifier, radioButton, &QRadioButton::setChecked);
+    connect(radioButton, &QRadioButton::toggled, settings, setter);
 }
 
 void PreferencesDialog::populateTranslationComboBox()
